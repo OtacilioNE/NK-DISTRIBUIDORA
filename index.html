@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
+    <title>Atualização de Planilhas</title>
+</head>
+<body>
+<h2>Atualização de Planilhas</h2>
+
+<form id="uploadForm">
+    <label for="planilhaBase">Planilha Base (Sistema):</label>
+    <input type="file" id="planilhaBase" accept=".xlsx" required>
+
+    <br>
+
+    <label for="planilhaDesatualizada">Planilha Desatualizada (Site):</label>
+    <input type="file" id="planilhaDesatualizada" accept=".xlsx" required>
+
+    <br>
+
+    <button type="button" onclick="exec()">Atualizar Planilha</button>
+</form>
+
+<script>
+    function exec(){
+    getDataBase(setDataBase);
+}
+    //"getDataBase" Esta função é responsável por obter dados da planilha base (sistema).
+    function getDataBase(callback){
+        const input = document.getElementById('planilhaBase');
+        const file = input.files[0];
+
+        if (!file) {
+            alert('Por favor, selecione ambas as planilhas.');
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function(e){
+            const workbook = XLSX.read(e.target.result, { type: 'binary' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const data = XLSX.utils.sheet_to_json(sheet, { raw: false, defval: null, header: 1 });
+
+            callback(data);
+        }
+
+        reader.readAsBinaryString(file);
+    }
+    //"setDataBase" Esta função é responsável por processar a planilha desatualizada com base nos dados da planilha base.
+    function setDataBase(baseData){
+        const input = document.getElementById('planilhaDesatualizada');
+        const file = input.files[0];
+
+        if (!file) {
+            alert('Por favor, selecione ambas as planilhas.');
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function(e){
+            const workbook = XLSX.read(e.target.result, { type: 'binary' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const data = XLSX.utils.sheet_to_json(sheet, { raw: false, defval: null, header: 1 });
+
+           for(const rowKey in data){
+                const updatedData = baseData.find(baseRow =>{
+                    return checkEquals(data[rowKey],baseRow);
+                });
+
+                //Logica de substituicao de dados
+
+                if(updatedData){
+                    data[rowKey][10] = updatedData[7];
+                    data[rowKey][15] = updatedData[8];
+                    data[rowKey][5] = updatedData[1];
+                }
+                console.log(data[rowKey]);
+           }
+        }
+        reader.readAsBinaryString(file);
+    }
+    // "checkEquals" Esta função compara dois conjuntos de dados (uma linha de cada planilha) para verificar se um identificador específico é igual em ambos.
+    function checkEquals(targetData, baseData){
+        try{
+            const targetId = Number(targetData[3]);
+            const baseId = Number(baseData[0]);
+            return targetId === baseId;
+        }catch(_){
+    return false;
+        }
+    }
+</script>
+
+</body>
+</html>

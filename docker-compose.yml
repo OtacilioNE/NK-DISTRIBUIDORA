@@ -1,0 +1,74 @@
+# config.
+version: "3"
+
+# volumes.
+volumes:
+  postgres-data:
+  redis-data:
+
+# services.
+services:
+  # Postgres.
+  postgres:
+    image: postgres:12-alpine
+    container_name: nk-postgres
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=nk
+      - POSTGRES_USER=nk
+      - POSTGRES_PASSWORD=nk
+
+  # Redis.
+  cache:
+    image: redis:4.0-alpine
+    container_name: nk-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    ports:
+      - 6379:6379
+
+  # APP.
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    container_name: nk-php
+    restart: unless-stopped
+    working_dir: /var/www/app
+    environment:
+       SERVICE_NAME: app
+       SERVICE_TAGS: dev
+    volumes:
+      - .:/var/www/app
+    links:
+      - postgres
+      - cache
+
+  # QUEUE
+  queue:
+    image: luantecnobit/php:latest
+    container_name: nk-queue
+    command: php artisan horizon
+    volumes:
+      - .:/var/www/app
+    restart: unless-stopped
+    links:
+      - postgres
+      - cache
+
+  server:
+    image: nginx:alpine
+    container_name: nk-webserver
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/app
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+    ports:
+      - 80:80
+    links:
+      - app
