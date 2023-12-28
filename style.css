@@ -3,12 +3,35 @@ body {
     font-family: Arial, sans-serif;
     margin: 20px;
     padding: 20px;
+    text-align: center;
+}
+#centralizado {
+    display: flex;
+    justify-content: center;
+    padding: 0px 200px;
+}
 
+#logonk {
+    width: 300px;
+}
+
+#loading {
+    display: none;
+    text-align: center;
+}
+
+h1 {
+    text-align: center;
 }
 
 form {
     margin-top: 20px;
+}
 
+img {
+    width: 50px;
+    display: flex;
+    justify-content: center;
 }
 
 label {

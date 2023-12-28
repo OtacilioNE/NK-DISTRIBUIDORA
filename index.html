@@ -11,24 +11,32 @@
 </head>
 <body>
 <h2>Atualização de Planilhas</h2>
+<hr>
+<div id="centralizado">
+    <form>
+        <label for="planilhaBase">Planilha Base (Sistema):</label>
+        <input type="file" id="planilhaBase" accept=".xlsx" required>
 
-<form id="uploadForm">
-    <label for="planilhaBase">Planilha Base (Sistema):</label>
-    <input type="file" id="planilhaBase" accept=".xlsx" required>
+        <br>
 
-    <br>
+        <label for="planilhaDesatualizada">Planilha Desatualizada (Site):</label>
+        <input type="file" id="planilhaDesatualizada" accept=".xlsx" required>
 
-    <label for="planilhaDesatualizada">Planilha Desatualizada (Site):</label>
-    <input type="file" id="planilhaDesatualizada" accept=".xlsx" required>
+        <br>
 
-    <br>
-
-    <button type="button" onclick="exec()">Atualizar Planilha</button>
-</form>
-
+        <button type="button" onclick="exec()">Atualizar Planilha</button>
+    </form>
+    <hr>
+    <img src="logonk.png" id="logonk">
+</div>
+<br> 
+<div id="loading">
+    Processando...
+</div>   
 <script>
     function exec(){
-    getDataBase(setDataBase);
+        document.getElementById('loading').style.display = 'block';
+        getDataBase(setDataBase);
 }
     //"getDataBase" Esta função é responsável por obter dados da planilha base (sistema).
     function getDataBase(callback){
@@ -45,13 +53,14 @@
         reader.onload = function(e){
             const workbook = XLSX.read(e.target.result, { type: 'binary' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const data = XLSX.utils.sheet_to_json(sheet, { raw: false, defval: null, header: 1 });
+            const excel = XLSX.utils.sheet_to_json(sheet, { raw: false, defval: null, header: 1 });
 
-            callback(data);
+            callback(excel);
         }
 
         reader.readAsBinaryString(file);
     }
+
     //"setDataBase" Esta função é responsável por processar a planilha desatualizada com base nos dados da planilha base.
     function setDataBase(baseData){
         const input = document.getElementById('planilhaDesatualizada');
@@ -67,25 +76,48 @@
         reader.onload = function(e){
             const workbook = XLSX.read(e.target.result, { type: 'binary' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const data = XLSX.utils.sheet_to_json(sheet, { raw: false, defval: null, header: 1 });
+            let excel = XLSX.utils.sheet_to_json(sheet, { raw: false, defval: null, header: 1 });
 
-           for(const rowKey in data){
-                const updatedData = baseData.find(baseRow =>{
-                    return checkEquals(data[rowKey],baseRow);
-                });
-
-                //Logica de substituicao de dados
-
-                if(updatedData){
-                    data[rowKey][10] = updatedData[7];
-                    data[rowKey][15] = updatedData[8];
-                    data[rowKey][5] = updatedData[1];
+            for (let i = 2; i < excel.length; i++) {
+                let columnIndex = 15; // 15 corresponde à coluna 'P'
+                let cellReference = XLSX.utils.encode_cell({ r: i, c: columnIndex });
+                
+                if (sheet[cellReference]) {
+                    sheet[cellReference].z = '#.##_)';
                 }
-                console.log(data[rowKey]);
+            }
+
+
+
+
+           for(const rowKey in excel){
+                const updatedData = baseData.find(baseRow =>{
+                    return checkEquals(excel[rowKey],baseRow);
+                });
+                
+                if(updatedData){
+                        const rowValue = Number(rowKey) + 1;
+                        //XLSX.utils.sheet_add_aoa(sheet,[[{v:updatedData[7], t:'n'}]],{origin:"K"+rowValue});
+                        XLSX.utils.sheet_add_aoa(sheet,[[updatedData[7]]],{origin:"K"+rowValue});
+                        //XLSX.utils.sheet_add_aoa(sheet,[[updatedData[8]]],{origin:"P"+rowValue});
+                }
+                console.log(excel[5]);
            }
+
+           workbook.Sheets[workbook.SheetNames[0]] = sheet;
+
+           XLSX.writeFile(workbook, "planilha_atualizada.xlsx");
+
+           document.getElementById('loading').style.display = 'none';
         }
         reader.readAsBinaryString(file);
     }
+
+    function formatNumberLocator(Number) {
+    if (Number != undefined){
+        return Number.replace(',', '.');
+    }
+}
     // "checkEquals" Esta função compara dois conjuntos de dados (uma linha de cada planilha) para verificar se um identificador específico é igual em ambos.
     function checkEquals(targetData, baseData){
         try{
@@ -93,9 +125,12 @@
             const baseId = Number(baseData[0]);
             return targetId === baseId;
         }catch(_){
-    return false;
+            return false;
         }
     }
+    //loading
+    //disabled_button
+
 </script>
 
 </body>
