@@ -31,16 +31,16 @@
     <hr>
     <img src="logonk.png" id="logonk">
 </div>
-<br> 
+<br>
 <div id="loading">
-    Processando...
-</div>   
+   Processando...
+</div>
 <script>
     function exec(){
         document.getElementById('loading').style.display = 'block';
     getDataBase(setDataBase);
 }
-    //"getDataBase" Esta função é responsável por obter dados da planilha base (sistema).
+
     function getDataBase(callback){
         const input = document.getElementById('planilhaBase');
         const file = input.files[0];
@@ -74,7 +74,7 @@
 
         reader.readAsBinaryString(file);
     }
-    //"setDataBase" Esta função é responsável por processar a planilha desatualizada com base nos dados da planilha base.
+
     function setDataBase(rowsBase){
         const input = document.getElementById('planilhaDesatualizada');
         const file = input.files[0];
@@ -101,9 +101,9 @@
                         const matchedRow = rowsBase.find((baseObject) => checkEquals(row.values, baseObject));
 
                         if(matchedRow){
-                            row.getCell("K").value = matchedRow[8];
-                            row.getCell("P").value = matchedRow[9];
-                            console.log(matchedRow);
+                            row.getCell("K").value = matchedRow[7];
+                            v = matchedRow[10].replace(".", "");
+                            row.getCell("P").value = v.replace(",", ".");
                         }
                     }
                     document.getElementById('loading').style.display = 'none';
@@ -114,7 +114,7 @@
 
         reader.readAsBinaryString(file);
     }
-    // "checkEquals" Esta função compara dois conjuntos de dados (uma linha de cada planilha) para verificar se um identificador específico é igual em ambos.
+
     function checkEquals(targetData, baseData){
         try{
             const targetId = Number(targetData[4]);
@@ -134,11 +134,6 @@ function downloadFile(workbook){
         saveAs(blob,"Planilha Atualizada.xlsx");
     });
 }
-
-    //alterar o nome da tabela
-    //validar se precisa de formatação no valor de preço '.' ou ','
-    //loading
-    //disabled_button
 
 </script>
 
