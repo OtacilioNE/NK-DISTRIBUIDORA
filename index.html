@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="style.css">
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
 
     <title>Atualização de Planilhas</title>
@@ -36,7 +38,7 @@
 <script>
     function exec(){
         document.getElementById('loading').style.display = 'block';
-        getDataBase(setDataBase);
+    getDataBase(setDataBase);
 }
     //"getDataBase" Esta função é responsável por obter dados da planilha base (sistema).
     function getDataBase(callback){
@@ -51,18 +53,29 @@
         const reader = new FileReader();
 
         reader.onload = function(e){
-            const workbook = XLSX.read(e.target.result, { type: 'binary' });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const excel = XLSX.utils.sheet_to_json(sheet, { raw: false, defval: null, header: 1 });
+            const workbook = new ExcelJS.Workbook();
+            workbook.xlsx.load(e.target.result).then(function(workbook){
+                const worksheet = workbook.worksheets[0];
 
-            callback(excel);
+                const rows = [];
+
+
+                for (let i = 1; i <= worksheet.rowCount; i++) {
+                    const row = worksheet.getRow(i);
+                
+                    if(row.values[1] && !isNaN(row.values[1])){
+                        rows.push(row.values);
+                    }
+                }
+
+                callback(rows);
+            });
         }
 
         reader.readAsBinaryString(file);
     }
-
     //"setDataBase" Esta função é responsável por processar a planilha desatualizada com base nos dados da planilha base.
-    function setDataBase(baseData){
+    function setDataBase(rowsBase){
         const input = document.getElementById('planilhaDesatualizada');
         const file = input.files[0];
 
@@ -74,60 +87,56 @@
         const reader = new FileReader();
 
         reader.onload = function(e){
-            const workbook = XLSX.read(e.target.result, { type: 'binary' });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            let excel = XLSX.utils.sheet_to_json(sheet, { raw: false, defval: null, header: 1 });
+            const workbook = new ExcelJS.Workbook();
+            workbook.xlsx.load(e.target.result).then(function(_workbook){
+                const worksheet = _workbook.getWorksheet("Products");
 
-            for (let i = 2; i < excel.length; i++) {
-                let columnIndex = 15; // 15 corresponde à coluna 'P'
-                let cellReference = XLSX.utils.encode_cell({ r: i, c: columnIndex });
+                for (let i = 1; i <= worksheet.rowCount; i++) {
+
+                    const row = worksheet.getRow(i);
                 
-                if (sheet[cellReference]) {
-                    sheet[cellReference].z = '#.##_)';
+                    const sku = row.getCell("D").value;
+
+                    if(sku){
+                        const matchedRow = rowsBase.find((baseObject) => checkEquals(row.values, baseObject));
+
+                        if(matchedRow){
+                            row.getCell("K").value = matchedRow[8];
+                            row.getCell("P").value = matchedRow[9];
+                            console.log(matchedRow);
+                        }
+                    }
+                    document.getElementById('loading').style.display = 'none';
                 }
-            }
-
-
-
-
-           for(const rowKey in excel){
-                const updatedData = baseData.find(baseRow =>{
-                    return checkEquals(excel[rowKey],baseRow);
-                });
-                
-                if(updatedData){
-                        const rowValue = Number(rowKey) + 1;
-                        //XLSX.utils.sheet_add_aoa(sheet,[[{v:updatedData[7], t:'n'}]],{origin:"K"+rowValue});
-                        XLSX.utils.sheet_add_aoa(sheet,[[updatedData[7]]],{origin:"K"+rowValue});
-                        //XLSX.utils.sheet_add_aoa(sheet,[[updatedData[8]]],{origin:"P"+rowValue});
-                }
-                console.log(excel[5]);
-           }
-
-           workbook.Sheets[workbook.SheetNames[0]] = sheet;
-
-           XLSX.writeFile(workbook, "planilha_atualizada.xlsx");
-
-           document.getElementById('loading').style.display = 'none';
+                downloadFile(_workbook);
+            });
         }
+
         reader.readAsBinaryString(file);
     }
-
-    function formatNumberLocator(Number) {
-    if (Number != undefined){
-        return Number.replace(',', '.');
-    }
-}
     // "checkEquals" Esta função compara dois conjuntos de dados (uma linha de cada planilha) para verificar se um identificador específico é igual em ambos.
     function checkEquals(targetData, baseData){
         try{
-            const targetId = Number(targetData[3]);
-            const baseId = Number(baseData[0]);
+            const targetId = Number(targetData[4]);
+            const baseId = Number(baseData[1]);
             return targetId === baseId;
         }catch(_){
             return false;
         }
     }
+    
+function downloadFile(workbook){
+    workbook.xlsx.writeBuffer({
+                    useStyles: true,
+                    useSharedStrings: true
+                }).then(function (data) {
+        const blob = new Blob([data],{ type: 'application/xlsx' });
+        saveAs(blob,"Planilha Atualizada.xlsx");
+    });
+}
+
+    //alterar o nome da tabela
+    //validar se precisa de formatação no valor de preço '.' ou ','
     //loading
     //disabled_button
 
