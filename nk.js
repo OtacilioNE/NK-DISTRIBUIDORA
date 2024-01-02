@@ -64,7 +64,7 @@ function setDataBase(rowsBase){
 
                     if(matchedRow){
                         row.getCell("K").value = matchedRow[7];
-                        v = matchedRow[10].replace(".", "");
+                        v = matchedRow[8].replace(".", "");
                         row.getCell("P").value = v.replace(",", ".");
                     }
                 }
