@@ -1,8 +1,8 @@
 alert ("Serão aceitos apenas arquivos .xlsx (Planilha)")
 
 function exec(){
-    document.getElementById('loading').style.display = 'block';
-getDataBase(setDataBase);
+        document.getElementById('loading').style.display = 'block';
+    getDataBase(setDataBase);
 }
 
 function getDataBase(callback){

@@ -15,8 +15,8 @@ body {
     width: 300px;
 }
 
-div > #loading{
-    visibility: hidden;
+#loading{
+    display: none;
     text-align: center;
 }
 
