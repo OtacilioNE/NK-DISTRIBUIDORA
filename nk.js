@@ -96,6 +96,11 @@ workbook.xlsx.writeBuffer({
                 useSharedStrings: true
             }).then(function (data) {
     const blob = new Blob([data],{ type: 'application/xlsx' });
-    saveAs(blob,"Planilha Atualizada.xlsx");
+    var dataAtual = new Date();
+    var dia = dataAtual.getDate();
+    var mes = dataAtual.getMonth() + 1;
+    var ano = dataAtual.getFullYear();
+    
+    saveAs(blob,`${dia}/${mes}/${ano}.xlsx`);
 });
 }
