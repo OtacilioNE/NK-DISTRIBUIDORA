@@ -72,6 +72,7 @@ function setDataBase(rowsBase){
                 }
                 document.getElementById('loading').style.display = 'none';
             }
+            alert("Concluído \u2705")
             downloadFile(_workbook);
         });
     }
