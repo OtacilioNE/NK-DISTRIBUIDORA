@@ -1,3 +1,5 @@
+alert ("Serão aceitos apenas arquivos .xlsx (Planilha)")
+
 function exec(){
     document.getElementById('loading').style.display = 'block';
 getDataBase(setDataBase);
@@ -70,6 +72,7 @@ function setDataBase(rowsBase){
                 }
                 document.getElementById('loading').style.display = 'none';
             }
+            alert("Concluído \u2705")
             downloadFile(_workbook);
         });
     }
